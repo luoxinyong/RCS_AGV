@@ -1,0 +1,4 @@
+<launch>
+<node pkg="rviz"  type="rviz"  name="rviz"  args="-d $(find loc_ad)/rviz/test_frame.rviz"></node>
+<node pkg="loc_ad"  type="test_frame_node"  name="test_frame_node"  output="screen"></node>
+</launch>

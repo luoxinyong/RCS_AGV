@@ -1,0 +1,8 @@
+[1125/081120:INFO:mailmaster_exe.cpp(96)] Start ======================================================
+[1125/081120:INFO:mailmaster_exe.cpp(97)] Commandline: --type=utility --channel="16068.1.678677737\1803237146" --lang=en-US --no-sandbox --no-sandbox --lang=zh-CN --log-file="C:\Users\hf\AppData\Local\Netease\MailMaster\logs\web.log" --product-version="Chrome/49.0.2623.110 MailMasterPC/4.19.5.1007" /prefetch:8
+[1125/081120:INFO:mailmaster_exe.cpp(57)] Environment: {"CPULogicalCores":20,"CPUModel":"13th Gen Intel(R) Core(TM) i7-13700H","Mac":["D4E98A5F58F2","00155D5A1801"],"Memory":"15867/32492M","OSArchitecture":"x86_64","OSVersion":"10.0.26100"}
+[1125/081120:INFO:mailmaster_exe.cpp(58)] Exe.Path: C:\Program Files (x86)\Netease\MailMaster\Application\mailmaster.exe
+[1125/081120:INFO:mailmaster_exe.cpp(61)] Last system shutdown time: 2025-11-24 00:49:23.613 UTC
+[1125/081120:INFO:mailmaster_exe.cpp(63)] System start time: 2025-11-24 00:49:35.000 UTC
+[1125/081120:INFO:main_dll_loader.cpp(68)] Version: 4.19.5.1007
+[1125/081120:INFO:mailmaster_exe.cpp(130)] Process will exit with code: 0

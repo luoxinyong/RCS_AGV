@@ -1,0 +1,6 @@
+<launch>
+	<arg name="project" default="loc_ad"/>
+    <param name="robot_description" command="$(find xacro)/xacro $(find loc_ad)/launch/include/config/robot.urdf_loc_hf_heli_car.xacro --inorder" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true">
+    </node>
+</launch>

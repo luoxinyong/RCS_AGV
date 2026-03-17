@@ -1,0 +1,8 @@
+<library path="lib/libmpc_path_follower">
+  <class name="mpc_path_follower/MpcPathFollowerRos" type="mpc_path_follower::MpcPathFollowerRos" base_class_type="nav_core::BaseLocalPlanner">
+    <description>
+      A implementation of a local planner that attempts to follow a plan as closely as possible using mpc.
+    </description>
+  </class>
+</library>
+

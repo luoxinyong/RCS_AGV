@@ -1,0 +1,10 @@
+add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/GeographicLib)
+include_directories(${PROJECT_SOURCE_DIR}/third_party/GeographicLib/include/)
+list(APPEND ALL_TARGET_LIBRARIES libGeographiccc)
+
+install(
+    TARGETS libGeographiccc
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

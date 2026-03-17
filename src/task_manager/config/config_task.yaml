@@ -1,0 +1,15 @@
+ip_address_dtof: 192.168.3.82
+flag_use_2d_loc: false
+flag_enable_mpc: false
+flag_enable_pallet_identify: false
+flag_show_project_point: true
+min_dis_ahead_point: 1.0
+scale_ahead_point: 0.7
+step_generate_path: 0.1
+threshold_arrive_des: 0.08
+charge_arrive_des: 0.03
+distance_head: 1.0
+distance_tail: 1.0
+dis_derail: 0.2
+topic_task_rcs: task_rcs
+base_global_planner: "global_planner/GlobalPlanner"

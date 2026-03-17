@@ -1,0 +1,14 @@
+ip_rcs: 192.168.2.110 # 配置RCS的IP地址
+port: 1500 # 配置RCS的端口号
+# 配置寄存器的映射范围
+start_bits: 0 # 配置线圈寄存器的起始地址
+nb_bits: 500 # 配置线圈寄存器的数量
+start_input_bits: 0 # 配置输入线圈寄存器的起始地址
+nb_input_bits: 500 # 配置输入线圈寄存器的数量
+start_registers: 0 # 配置保持寄存器的起始地址为0
+nb_registers: 2500 # 配置保持寄存器的数量为2500个
+start_input_registers: 0 # 配置输入寄存器的起始地址为0
+nb_input_registers: 500 # 配置输入寄存器的数量分配500个
+recv_timeout: 3   # unit: s # 接收超时时间
+disconnect_count_max: 5 # 最大断开连接次数
+topic_task_rcs: task_rcs # 任务指令主题

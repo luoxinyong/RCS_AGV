@@ -1,0 +1,3 @@
+<launch>
+<node pkg="loc_ad"  type="send_walltime_odom" name="send_walltime_odom" output="screen"></node>
+</launch>

@@ -1,0 +1,17 @@
+GlobalPlanner:
+
+  use_dijkstra: false
+  use_quadratic: true
+  use_grid_path: false
+  publish_potential: true
+  use_eight_connet: false
+  use_footprint_astar: true  
+  BsplineOptimizer: false
+  # use_eight_connect: true 
+  orientation_window_size: 1
+  neutral_cost: 10
+  cost_factor: 5.0
+  enable_simple_curvature_optimization: false
+  curvature_threshold: 0.3
+  max_optimization_iterations: 10
+  

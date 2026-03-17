@@ -1,0 +1,48 @@
+# csg #
+##################  simulate use ####################
+# sub topic
+# lidarTopic: "/velodyne_points"
+# imuTopic: "/imu_wall_time"
+# gpsTopic: "/fix_wall_time"
+# velocityTopic: "/odom"
+
+##################  real time use ####################
+# sub topic
+lidarTopic: "/velodyne_points"
+imuTopic: "/imu_raw"
+gpsTopic: "/fix"
+velocityTopic: "/odom"
+
+# Frames
+lidarFrame: "/rslidar"
+imuFrame: "/imu_link"
+gpsFrame: "/navsat_link"
+baseFrame: "/base_footprint"
+
+
+
+##################  high precise car rosbag ####################
+# config fit to high precision car rosbag
+# sub topic
+# lidarTopic: "/velodyne_points"
+# imuTopic: "/imu/reframe_id"
+# gpsTopic: "/fix_use_now_time"
+# velocityTopic: "/vel_use_now_time"
+
+
+# # Frames
+# lidarFrame: "/rslidar"
+# imuFrame: "/imu_link"
+
+
+##################  normal rosbag  ####################
+# config fit to yunying car rosbag
+# sub topic
+# lidarTopic: "/velodyne_points"
+# imuTopic: "/imu"
+# gpsTopic: "/fix"
+# velocityTopic: "/vel_use_now_time"
+
+# # Frames
+# lidarFrame: "/rslidar"
+# imuFrame: "/imu_link"

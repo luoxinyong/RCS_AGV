@@ -1,0 +1,4 @@
+<launch>
+<node pkg="loc_ad"  type="send_walltime_imu"  name="send_walltime_imu"  output="screen"></node>
+<node pkg="loc_ad"  type="send_walltime_gps"  name="send_walltime_gps"  output="screen"></node>
+</launch>

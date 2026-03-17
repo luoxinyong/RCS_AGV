@@ -1,0 +1,12 @@
+<launch>
+    <rosparam command="load" file="$(find task_manager)/config/config_task.yaml" />
+    <rosparam file="$(find task_manager)/param/global_planner_params.yaml" command="load" />
+    <rosparam file="$(find task_manager)/param/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find task_manager)/param/costmap_common_params.yaml" command="load" ns="global_costmap"/>
+    <node pkg="task_manager" type="task_manager_node" name="task_manager" output="screen">
+    </node>
+    <!-- <node pkg="map_server" type="map_server" name="blank_map_server" output="screen"
+      args="$(find task_manager)/maps/blank_map.yaml">
+    <param name="frame_id" value="map"/>
+</node> -->
+</launch>
