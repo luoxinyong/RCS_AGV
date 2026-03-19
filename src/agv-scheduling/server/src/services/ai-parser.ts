@@ -89,6 +89,41 @@ const POINT_ALIASES: Record<string, string> = {
   "待命点": "P200", "等待点": "P200", "待机点": "P200",
 };
 
+// ========== 语音识别谐音纠错 ==========
+
+/** STT 常见谐音/错字修正表（key: 错误, value: 正确） */
+const STT_FIXES: [RegExp, string][] = [
+  // 数字谐音
+  [/午/g, "五"], [/无/g, "五"], [/舞/g, "五"],
+  [/刘/g, "六"], [/溜/g, "六"], [/留/g, "六"],
+  [/期/g, "七"], [/漆/g, "七"], [/骑/g, "七"],
+  [/吧/g, "八"], [/爸/g, "八"], [/把/g, "八"],
+  [/就/g, "九"], [/酒/g, "九"],
+  [/石/g, "十"], [/是/g, "十"],
+  [/衣/g, "一"], [/已/g, "一"],
+  [/耳/g, "二"], [/饿/g, "二"],
+  [/山/g, "三"], [/伞/g, "三"],
+  [/思/g, "四"], [/死/g, "四"],
+  // 动词谐音
+  [/道/g, "到"], [/倒/g, "到"],
+  [/区/g, "去"], [/趣/g, "去"],
+  [/拿/g, "那"],
+  // 名词谐音
+  [/掂/g, "点"], [/店/g, "点"], [/典/g, "点"],
+  [/好/g, "号"], [/耗/g, "号"],
+  [/或/g, "货"], [/活/g, "货"],
+  [/冲/g, "充"], [/虫/g, "充"],
+];
+
+/** 对 STT 输出做谐音纠错，提高下游解析成功率 */
+function sttFuzzyFix(text: string): string {
+  let fixed = text;
+  for (const [pattern, replacement] of STT_FIXES) {
+    fixed = fixed.replace(pattern, replacement);
+  }
+  return fixed;
+}
+
 // ========== 核心解析逻辑 ==========
 
 /**
@@ -106,7 +141,7 @@ const POINT_ALIASES: Record<string, string> = {
  * ```
  */
 export async function parseText(text: string): Promise<ParseResult> {
-  const cleaned = text.trim();
+  const cleaned = sttFuzzyFix(text.trim());
 
   if (!cleaned) {
     return { success: false, error: "输入为空" };

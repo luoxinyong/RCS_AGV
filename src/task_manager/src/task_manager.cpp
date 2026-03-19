@@ -1863,7 +1863,7 @@ void TaskManager::InitTaskData()
 // 任务执行函数：根据子任务类型的type选择对应的处理函数
 void TaskManager::ExecuteTask()
 {
-    
+
 
     RCSNodeStru cur_step_task = vec_step_task_stru_global_[index_current_step_task_];
     switch (static_cast<RCSNodeTypeEnum>(cur_step_task.type)) {
@@ -1883,7 +1883,7 @@ void TaskManager::ExecuteTask()
                     flag_direction_ = 1;  // 左旋
                     angle_deg = cur_step_task.heading - 1000;  // 提取实际角度
                 } else {
-                    flag_direction_ = 0; // 不指定转向  
+                    flag_direction_ = 0; // 不指定转向
                     angle_deg = cur_step_task.heading;         // 直接使用角度值
                 }
                 double angle_target = NormalizeAngle(angle_deg  / 180.0 * M_PI);  // RCS下发目标角度单位为度
