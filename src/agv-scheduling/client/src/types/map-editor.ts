@@ -51,6 +51,8 @@ export interface PointSettings {
   obstacleAreas: number[];
   /** 自旋方向 */
   rotationDirection?: number;
+  /** 取货点绑定的 RFID EPC 标签（8位十六进制，如 "1A2B3C4D"） */
+  epc?: string;                    // ← 新增
 }
 
 /** 直线的约束条件 */

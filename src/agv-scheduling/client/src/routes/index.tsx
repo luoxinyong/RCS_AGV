@@ -10,6 +10,7 @@ import MapList from "@/pages/map/List";
 import MapEditor from "@/pages/map/editor";
 import HistoryTask from "@/pages/history/Task";
 import HistoryAlarm from "@/pages/history/Alarm";
+import ChatPanel from "@/pages/ai/ChatPanel";
 
 export const router = createBrowserRouter(
   [
@@ -72,6 +73,15 @@ export const router = createBrowserRouter(
             },
           ],
         },
+          {
+            path: "ai",
+            children: [
+              {
+                path: "/ai/chat",
+                element: <ChatPanel />,
+              },
+            ],
+          },
       ],
     },
   ]

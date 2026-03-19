@@ -13,6 +13,7 @@ import { initPostgres } from "./services/postgres";
 import { errorHandler } from "./middlewares/error";
 import { requestLogger } from "./middlewares/logger";
 import { startScheduling } from "./services/scheduler";
+import aiRoutes from "./routes/ai";
 
 // Express应用设置
 const app = express();
@@ -29,6 +30,7 @@ app.use(
   expressjwt({ secret: APP_CONFIG.JWT_SECRET, algorithms: ["HS256"] }).unless({
     path: [
       { url: `/api/${APP_CONFIG.API_VERSION}/user/login`, method: "POST" },
+      { url: /\/api\/v1\/ai\/.*/, methods: ["GET", "POST", "PUT"] },
     ],
   })
 );
@@ -40,7 +42,7 @@ app.use(`/api/${APP_CONFIG.API_VERSION}/task`, taskRoutes);
 app.use(`/api/${APP_CONFIG.API_VERSION}/alarm`, alarmRoutes);
 app.use(`/api/${APP_CONFIG.API_VERSION}/map`, mapRoutes);
 app.use(`/api/${APP_CONFIG.API_VERSION}/doors`, doorRoutes);
-
+app.use(`/api/${APP_CONFIG.API_VERSION}/ai`, aiRoutes);
 // 错误处理中间件
 app.use(errorHandler);
 

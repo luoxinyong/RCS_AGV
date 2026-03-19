@@ -16,16 +16,20 @@ import {
   type SubTask,
 } from "../utils/modbus";
 import type { AGVStatus } from "../types/device";
+import VDA5050Adapter from "./vda5050-adapter";
 
 // 保留agv最新的一条记录，用于根据当前状态下发指令
-const agvStatus = new Map<String, AGVStatus>();
+export const agvStatus = new Map<String, AGVStatus>();
+
+// modbus客户端列表（在startScheduling中初始化）
+export let modbusClients: ModbusClient[] = [];
 
 export async function startScheduling(server: Server) {
   // 获取所有设备
   const devices = await queryDevices();
 
   // 1.初始化modbus通信
-  const modbusClients = devices.map(
+  modbusClients = devices.map(
     (e) => new ModbusClient(e.id.toString(), e.ip, e.port)
   );
 
@@ -70,10 +74,21 @@ export async function startScheduling(server: Server) {
   MqttClient.getInstance().configure({
     brokerUrl: `mqtt://${APP_CONFIG.MQTT_HOST}:${APP_CONFIG.MQTT_PORT}`,
     options: { reconnectPeriod: 3000, connectTimeout: 10000 },
+    onConnected: () => {
+      // MQTT 连接/重连后，VDA5050 适配器注册订阅
+      if (APP_CONFIG.VDA5050_ENABLED) {
+        VDA5050Adapter.getInstance().onMqttConnected();
+      }
+    },
   });
 
   // 4.启动卷帘门服务，30分钟
   DoorService.getInstance().start(30 * 60 * 1000);
+
+  // 5.启动VDA5050适配层
+  if (APP_CONFIG.VDA5050_ENABLED) {
+    VDA5050Adapter.getInstance().start();
+  }
 }
 
 async function getAgvStatus(client: ModbusClient) {
@@ -240,7 +255,7 @@ async function sendMessageToModbus(args: {
   }
 }
 
-async function schedulingHandler(
+export async function schedulingHandler(
   client: ModbusClient,
   type: string,
   steps: SubTask[]
@@ -281,7 +296,7 @@ async function schedulingHandler(
   }, 1000);
 }
 
-async function stopHandler(client: ModbusClient) {
+export async function stopHandler(client: ModbusClient) {
   const st = Date.now();
   // 取消订阅所有门
   for (const door of DoorService.getInstance().getDoors()) {

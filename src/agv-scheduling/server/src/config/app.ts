@@ -17,6 +17,15 @@ const APP_CONFIG = {
   PG_USER: process.env.PG_USER!,
   PG_PASSWORD: process.env.PG_PASSWORD!,
   PG_DATABASE: process.env.PG_DATABASE!,
+
+  // VDA5050 适配层配置
+  VDA5050_ENABLED: process.env.VDA5050_ENABLED !== "false", // 默认启用
+  VDA5050_MANUFACTURER: process.env.VDA5050_MANUFACTURER || "myagv",
+
+  // STT（语音转文本）配置
+  STT_BACKEND: (process.env.STT_BACKEND || "passthrough") as "vosk" | "whisper" | "passthrough",
+  STT_VOSK_URL: process.env.STT_VOSK_URL || "http://localhost:2700",
+  STT_WHISPER_URL: process.env.STT_WHISPER_URL || "http://localhost:8080",
 };
 
 export default APP_CONFIG;

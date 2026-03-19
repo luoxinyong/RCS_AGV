@@ -1,6 +1,6 @@
 export const servers = {
-  apiServer: "http://172.17.80.25:3001",
-  websocketServer: "ws://172.17.80.25:3001",
+  apiServer: "http://localhost:3001",
+  websocketServer: "ws://localhost:3001",
   // PG_HOST: 172.16.18.91  | localhost
   // PG_PASSWORD: hewr@4r43 | vvho123456
   // PG_DATABASE: postgres  | agv

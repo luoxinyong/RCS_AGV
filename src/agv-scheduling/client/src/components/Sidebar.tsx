@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { RobotOutlined } from "@ant-design/icons";
 import {
   ChevronRight,
   SunMedium,
@@ -50,6 +51,12 @@ const navigationTree: NavigationProps[] = [
       { name: "报警监控", path: "/history/alarm" },
     ],
   },
+  {
+  name: "智能交互",
+  path: "/ai",
+  icon: () => <RobotOutlined className="w-5 h-5" />,   // 需要 import
+  children: [{ name: "任务助手", path: "/ai/chat" }],
+},
 ];
 
 export default function Sidebar() {
