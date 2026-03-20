@@ -28,12 +28,13 @@ import {
   AudioOutlined,
   LoadingOutlined,
 } from "@ant-design/icons";
-import { servers, localStorageKey, agvKey } from "@/config";
+import { servers, localStorageKey } from "@/config";
 import { randomInRange } from "@/lib";
 import {
   agvForwardTask,
   agvPickAndDropTask,
   agvChargeTask,
+  findChargePoints,
   findClosestPoint,
   findShortestPath,
 } from "@/lib/map-editor";
@@ -157,8 +158,6 @@ const QUICK_COMMANDS = [
   "暂停",
 ];
 
-const kChargeId = agvKey.chargePointId;
-
 // ========== 辅助函数 ==========
 
 /** Q006 → "6", P100 → "100" */
@@ -255,8 +254,11 @@ function computeRouteSummary(
     const edges = findShortestPath(graphEdges, startId, endId);
     if (edges) allEdges.push(...edges);
   } else if (task.taskType === "charge") {
-    const edges = findShortestPath(graphEdges, startId, kChargeId);
-    if (edges) allEdges.push(...edges);
+    const chargePoints = findChargePoints(points);
+    if (chargePoints.length > 0) {
+      const edges = findShortestPath(graphEdges, startId, chargePoints[0].id!);
+      if (edges) allEdges.push(...edges);
+    }
   }
 
   if (allEdges.length === 0) return undefined;
@@ -621,12 +623,18 @@ export default function ChatPanel() {
         } else if (task.taskType === "charge") {
           // ===== 充电任务 =====
           wsType = "charge";
-          const edges = findShortestPath(graphEdges, startId, kChargeId);
-          if (!edges || edges.length === 0) {
-            notification.error({ message: "无法找到到充电站的路径" });
+          const chargePoints = findChargePoints(points);
+          if (chargePoints.length === 0) {
+            notification.error({ message: "地图中未设置充电点" });
             return;
           }
-          tasks = agvChargeTask(kChargeId, { angle: agvStatus.angle, edges });
+          const chargeId = chargePoints[0].id!;
+          const edges = findShortestPath(graphEdges, startId, chargeId);
+          if (!edges || edges.length === 0) {
+            notification.error({ message: "无法找到到充电点的路径" });
+            return;
+          }
+          tasks = agvChargeTask(chargeId, { angle: agvStatus.angle, edges });
 
         } else {
           notification.error({ message: "不支持的任务类型或缺少必要参数" });

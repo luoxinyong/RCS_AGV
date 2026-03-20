@@ -1,6 +1,6 @@
 import { App } from "antd";
 import { useRef, useState, useCallback, useEffect, useMemo } from "react";
-import { servers, localStorageKey, agvKey } from "@/config";
+import { servers, localStorageKey } from "@/config";
 import { mapApi, doorApi } from "@/network/api";
 import { randomInRange } from "@/lib";
 import {
@@ -8,6 +8,7 @@ import {
   agvForwardTask,
   agvPickAndDropTask,
   agvRaiseTask,
+  findChargePoints,
   findClosestPoint,
   findShortestPath,
 } from "@/lib/map-editor";
@@ -27,8 +28,6 @@ import type {
   SubTask,
   TaskMode,
 } from "@/types/map-editor";
-
-const kChargeId = agvKey.chargePointId;
 
 const MapEditor: React.FC = () => {
   const { message, notification } = App.useApp();
@@ -401,14 +400,20 @@ const MapEditor: React.FC = () => {
         //   tasks.push(...t2); // 反
         // }
       } else {
-        // TODO: 寻找充电点
-        const edges = findShortestPath(graphEdges, startId, kChargeId);
+        // 从地图数据中查找充电点
+        const chargePoints = findChargePoints(points);
+        if (chargePoints.length === 0) {
+          message.error("充电任务：地图中未设置充电点！");
+          return;
+        }
+        const chargeId = chargePoints[0].id!;
+        const edges = findShortestPath(graphEdges, startId, chargeId);
         if (!edges || edges.length === 0) {
-          message.error("充电任务：无法找到有效路径！");
+          message.error("充电任务：无法找到到充电点的路径！");
           return;
         }
         tasks.push(
-          ...agvChargeTask(kChargeId, { angle: agvStatus.angle, edges })
+          ...agvChargeTask(chargeId, { angle: agvStatus.angle, edges })
         );
       }
 
@@ -422,9 +427,11 @@ const MapEditor: React.FC = () => {
     (agvStatus: AGVStatus) => {
       // 停止充电，这里需要延时调用，否则ros会报udp断开错误
       if (agvStatus.chargeMode === 1) {
+        const chargePoints = findChargePoints(points);
+        const chargeId = chargePoints[0]?.id ?? "0";
         sendWsMessage("stop_charge", {
           agvId: agvStatus.id,
-          message: agvChargeTask(kChargeId),
+          message: agvChargeTask(chargeId),
         });
         setTimeout(() => {
           sendWsMessage("stop", { agvId: agvStatus.id });
@@ -433,7 +440,7 @@ const MapEditor: React.FC = () => {
         sendWsMessage("stop", { agvId: agvStatus.id });
       }
     },
-    [sendWsMessage]
+    [points, sendWsMessage]
   );
 
   useEffect(() => {

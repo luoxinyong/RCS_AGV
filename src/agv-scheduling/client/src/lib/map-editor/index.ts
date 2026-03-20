@@ -1,6 +1,11 @@
 import { agvKey } from "@/config";
 import type { ArcRoute, LineRoute, Point, SubTask } from "@/types/map-editor";
 
+/** 从地图点位中查找充电点（settings.isCharge === true 的点） */
+export function findChargePoints(points: Point[]): Point[] {
+  return points.filter((p) => p.settings?.isCharge === true);
+}
+
 /** 查询最小的未被使用的正整数坐标点 */
 export const findNextId = (points: Point[]) => {
   const usedNumber = new Set<number>();

@@ -4,8 +4,10 @@ import type { Point, AGVStatus, LineRoute, ArcRoute } from "@/types/map-editor";
 
 /** 创建fabric坐标点 */
 export const createCircle = (args: { center: Point; isPreview?: boolean }) => {
-  const { x, y, id, isPickOrDrop } = args.center;
+  const { x, y, id, isPickOrDrop, settings } = args.center;
+  const isCharge = settings?.isCharge === true;
   const radius = 4;
+  const pointColor = isCharge ? "#faad14" : isPickOrDrop ? "#ff6b6b" : "#36cfc9";
 
   const result: fabric.Object[] = [
     // 圆点
@@ -14,7 +16,7 @@ export const createCircle = (args: { center: Point; isPreview?: boolean }) => {
       left: x - radius,
       top: y - radius,
       radius: radius,
-      fill: isPickOrDrop ? "#ff6b6b" : "#36cfc9",
+      fill: pointColor,
       evented: false,
       stroke: "#ddd",
       strokeWidth: 2,
@@ -38,7 +40,7 @@ export const createCircle = (args: { center: Point; isPreview?: boolean }) => {
   // 文本标签显示ID
   if (id) {
     result.push(
-      new fabric.Text((isPickOrDrop ? "Q" : "P") + id, {
+      new fabric.Text((isCharge ? "C" : isPickOrDrop ? "Q" : "P") + id, {
         name: id,
         fontSize: 10,
         left: x,

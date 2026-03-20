@@ -293,10 +293,15 @@ const getPointCollapseItem = (args: {
   const { id, pointSettings, onChanged } = args;
   return {
     key: id,
-    label: `坐标点：${id}`,
+    label: `坐标点：${id}${pointSettings.isCharge ? " ⚡" : ""}`,
     children: (
       <>
-        <h4 className="mb-1">关闭避障（自旋）: </h4>
+        <h4 className="mb-1">充电点: </h4>
+        <Switch
+          value={pointSettings.isCharge ?? false}
+          onChange={(v) => onChanged({ ...pointSettings, isCharge: v })}
+        />
+        <h4 className="mb-1 mt-2">关闭避障（自旋）: </h4>
         <Checkbox.Group<number>
           value={pointSettings.obstacleAreas}
           onChange={(v) => onChanged({ ...pointSettings, obstacleAreas: v })}
