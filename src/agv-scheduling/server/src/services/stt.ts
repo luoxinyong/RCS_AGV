@@ -133,6 +133,8 @@ class WhisperBackend implements STTBackend {
       formData.append("file", blob, `audio.${options?.format || "wav"}`);
       formData.append("language", options?.language || "zh");
       formData.append("response_format", "json");
+      // 提示词引导 Whisper 识别 AGV 调度相关指令，大幅提升准确率
+      formData.append("prompt", "去一号点取货送到三号点，到五号点去，把六号点的货送到七号点，去充电，暂停，继续，取消");
 
       const res = await fetch(`${this.url}/inference`, {
         method: "POST",

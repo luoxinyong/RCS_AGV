@@ -91,12 +91,34 @@ interface ParsedTask {
   subtaskPreview: SubTaskPreview[];
 }
 
+/** 路径摘要中每段路的详情 */
+interface RouteSummaryItem {
+  from: string;
+  to: string;
+  type: "直线" | "弯道" | "自旋";
+  distance: number;
+  limitSpeed?: number;
+  doorId?: number;
+  obstacleAreas?: number[];
+  isObstacleDetour?: boolean;
+}
+
+/** 路径摘要（整条路径的汇总） */
+interface RouteSummary {
+  segments: RouteSummaryItem[];
+  totalDistance: number;
+  totalDoors: number;
+  doorIds: number[];
+  hasObstacleAreas: boolean;
+}
+
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: number;
   task?: ParsedTask;
+  routeSummary?: RouteSummary;
   status?: "parsing" | "parsed" | "confirmed" | "failed";
   taskId?: string;
 }
@@ -146,6 +168,102 @@ function parsePointId(qpId: string): string {
   return match ? match[1] : qpId;
 }
 
+/** 从寻路结果中提取路径摘要（门、避障、限速等） */
+function buildRouteSummary(edges: (LineRoute | ArcRoute)[]): RouteSummary {
+  const segments: RouteSummaryItem[] = [];
+  const doorIds = new Set<number>();
+  let totalDistance = 0;
+  let hasObstacleAreas = false;
+
+  for (const edge of edges) {
+    const startId = edge.start.id ?? "?";
+    const endId = edge.end.id ?? "?";
+    const isArc = "center" in edge && !!edge.center;
+    const routeSettings = edge.settings?.[`${startId}-${endId}`];
+
+    if (routeSettings?.doorId && routeSettings.doorId > 0) {
+      doorIds.add(routeSettings.doorId);
+    }
+    if (routeSettings?.obstacleAreas && routeSettings.obstacleAreas.length > 0) {
+      hasObstacleAreas = true;
+    }
+
+    totalDistance += edge.distance;
+    segments.push({
+      from: `P${startId}`,
+      to: `P${endId}`,
+      type: isArc ? "弯道" : "直线",
+      distance: Math.round(edge.distance),
+      limitSpeed: routeSettings?.limitSpeed,
+      doorId: routeSettings?.doorId,
+      obstacleAreas: routeSettings?.obstacleAreas,
+      isObstacleDetour: routeSettings?.isObstacleDetour,
+    });
+  }
+
+  return {
+    segments,
+    totalDistance: Math.round(totalDistance),
+    totalDoors: doorIds.size,
+    doorIds: [...doorIds],
+    hasObstacleAreas,
+  };
+}
+
+/** 根据解析结果和地图数据，计算完整路径摘要 */
+function computeRouteSummary(
+  task: ParsedTask,
+  scaledRoutes: (LineRoute | ArcRoute)[],
+  mapCtx: MapContext,
+  agvs: AGVStatus[],
+  selectedAgvId?: string,
+): RouteSummary | undefined {
+  if (task.taskType === "control") return undefined;
+
+  const agvStatus = agvs.find((a) => a.id === selectedAgvId && a.isOnline);
+  if (!agvStatus) return undefined;
+
+  const { building, floor, points, sizeRatio } = mapCtx;
+  const offsetX = building.origin.x + floor.agv_origin.x;
+  const offsetY = building.origin.y + floor.agv_origin.y;
+
+  // 找到 AGV 最近的路径点
+  const { closestPoint } = findClosestPoint({
+    points: points.filter((e) => !e.isPickOrDrop),
+    position: {
+      x: (offsetX + agvStatus.position.y) * sizeRatio,
+      y: (offsetY + agvStatus.position.x) * sizeRatio,
+    },
+    minDistance: Infinity,
+  });
+  if (!closestPoint) return undefined;
+
+  const graphEdges = [...scaledRoutes];
+  const startId = closestPoint.id!;
+
+  // 收集所有路段
+  let allEdges: (LineRoute | ArcRoute)[] = [];
+
+  if (task.taskType === "transport" && task.from && task.to) {
+    const pickId = parsePointId(task.from);
+    const endId = parsePointId(task.to);
+    const pickEdges = findShortestPath(graphEdges, startId, pickId);
+    const dropEdges = findShortestPath(graphEdges, pickId, endId);
+    if (pickEdges) allEdges.push(...pickEdges);
+    if (dropEdges) allEdges.push(...dropEdges);
+  } else if (task.taskType === "move" && task.to) {
+    const endId = parsePointId(task.to);
+    const edges = findShortestPath(graphEdges, startId, endId);
+    if (edges) allEdges.push(...edges);
+  } else if (task.taskType === "charge") {
+    const edges = findShortestPath(graphEdges, startId, kChargeId);
+    if (edges) allEdges.push(...edges);
+  }
+
+  if (allEdges.length === 0) return undefined;
+  return buildRouteSummary(allEdges);
+}
+
 /** 加载 SVG 图片获取宽度（用于计算 sizeRatio） */
 function loadSvgWidth(bd: number, fl: number): Promise<number> {
   return new Promise((resolve) => {
@@ -154,6 +272,45 @@ function loadSvgWidth(bd: number, fl: number): Promise<number> {
     img.onerror = () => resolve(0);
     img.src = `/assets/svg/${bd}-${fl}.svg`;
   });
+}
+
+/** 将 webm/ogg 等浏览器录音 Blob 转为 16kHz 单声道 WAV Blob */
+async function blobToWav(blob: Blob): Promise<Blob> {
+  const arrayBuffer = await blob.arrayBuffer();
+  const audioCtx = new AudioContext({ sampleRate: 16000 });
+  const decoded = await audioCtx.decodeAudioData(arrayBuffer);
+  await audioCtx.close();
+
+  // 取单声道数据
+  const samples = decoded.getChannelData(0);
+  const pcm = new Int16Array(samples.length);
+  for (let i = 0; i < samples.length; i++) {
+    const s = Math.max(-1, Math.min(1, samples[i]));
+    pcm[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+  }
+
+  // 构造 WAV 文件
+  const wavBuffer = new ArrayBuffer(44 + pcm.byteLength);
+  const view = new DataView(wavBuffer);
+  const writeStr = (offset: number, str: string) => {
+    for (let i = 0; i < str.length; i++) view.setUint8(offset + i, str.charCodeAt(i));
+  };
+  writeStr(0, "RIFF");
+  view.setUint32(4, 36 + pcm.byteLength, true);
+  writeStr(8, "WAVE");
+  writeStr(12, "fmt ");
+  view.setUint32(16, 16, true);         // chunk size
+  view.setUint16(20, 1, true);          // PCM
+  view.setUint16(22, 1, true);          // mono
+  view.setUint32(24, 16000, true);      // sample rate
+  view.setUint32(28, 16000 * 2, true);  // byte rate
+  view.setUint16(32, 2, true);          // block align
+  view.setUint16(34, 16, true);         // bits per sample
+  writeStr(36, "data");
+  view.setUint32(40, pcm.byteLength, true);
+  new Int16Array(wavBuffer, 44).set(pcm);
+
+  return new Blob([wavBuffer], { type: "audio/wav" });
 }
 
 // ========== 主组件 ==========
@@ -294,6 +451,16 @@ export default function ChatPanel() {
     try {
       const data = await apiPost("/api/v1/ai/parse", { text: msg });
 
+      // 解析成功后尝试计算路径摘要
+      let routeSummary: RouteSummary | undefined;
+      if (data?.success && data.task && mapCtx && scaledRoutes.length > 0) {
+        try {
+          routeSummary = computeRouteSummary(data.task, scaledRoutes, mapCtx, agvs, selectedAgvId);
+        } catch {
+          // 路径摘要计算失败不影响主流程
+        }
+      }
+
       setMessages((prev) =>
         prev.map((m) =>
           m.id === assistantMsg.id
@@ -303,6 +470,7 @@ export default function ChatPanel() {
                   ? data.task?.description ?? "解析成功"
                   : data?.error || "解析失败",
                 task: data?.success ? data.task : undefined,
+                routeSummary,
                 status: data?.success ? "parsed" : "failed",
               }
             : m
@@ -508,18 +676,19 @@ export default function ChatPanel() {
         // 停止所有音轨
         stream.getTracks().forEach((t) => t.stop());
 
-        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        if (audioBlob.size < 1000) {
+        const rawBlob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        if (rawBlob.size < 1000) {
           notification.warning({ message: "录音太短，请重试" });
           return;
         }
 
-        // 上传到后端 STT
+        // 上传到后端 STT（先转 WAV 格式，whisper-server 只支持 wav）
         setVoiceLoading(true);
         try {
+          const audioBlob = await blobToWav(rawBlob);
           const formData = new FormData();
-          formData.append("audio", audioBlob, "recording.webm");
-          formData.append("format", "webm");
+          formData.append("audio", audioBlob, "recording.wav");
+          formData.append("format", "wav");
 
           const token = localStorage.getItem(localStorageKey.token);
           const res = await fetch(`${servers.apiServer}/api/v1/ai/voice`, {
@@ -717,6 +886,50 @@ export default function ChatPanel() {
                             }))}
                           />
                         )}
+
+                      {/* 路径摘要 */}
+                      {msg.routeSummary && msg.routeSummary.segments.length > 0 && (
+                        <div className="mt-2 mb-1 p-2 bg-gray-50 rounded text-xs">
+                          <Text strong style={{ fontSize: 12 }}>
+                            路径详情（{msg.routeSummary.segments.length} 段，
+                            总距离 {(msg.routeSummary.totalDistance / 1000).toFixed(1)}m
+                            {msg.routeSummary.totalDoors > 0 &&
+                              `，${msg.routeSummary.totalDoors} 扇门`}
+                            ）
+                          </Text>
+                          <div className="mt-1 space-y-0.5">
+                            {msg.routeSummary.segments.map((seg, i) => (
+                              <div key={i} className="flex items-center gap-1 text-gray-600">
+                                <Text type="secondary" style={{ fontSize: 11 }}>
+                                  {seg.from} → {seg.to}：{seg.type} {(seg.distance / 1000).toFixed(1)}m
+                                  {seg.limitSpeed ? `，限速 ${seg.limitSpeed}` : ""}
+                                </Text>
+                                {seg.doorId && seg.doorId > 0 && (
+                                  <Tag color="warning" style={{ fontSize: 10, lineHeight: "16px", padding: "0 4px", margin: 0 }}>
+                                    {seg.doorId}号门
+                                  </Tag>
+                                )}
+                                {seg.obstacleAreas && seg.obstacleAreas.length > 0 && (
+                                  <Tag color="processing" style={{ fontSize: 10, lineHeight: "16px", padding: "0 4px", margin: 0 }}>
+                                    避障{seg.obstacleAreas.join(",")}
+                                  </Tag>
+                                )}
+                                {seg.isObstacleDetour && (
+                                  <Tag color="purple" style={{ fontSize: 10, lineHeight: "16px", padding: "0 4px", margin: 0 }}>
+                                    绕障
+                                  </Tag>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          {msg.routeSummary.totalDoors === 0 &&
+                            !msg.routeSummary.hasObstacleAreas && (
+                            <Text type="secondary" style={{ fontSize: 11 }}>
+                              此路径无卷帘门、无特殊避障区域
+                            </Text>
+                          )}
+                        </div>
+                      )}
 
                       {/* 操作按钮 */}
                       {msg.status === "parsed" && msg.task && (
