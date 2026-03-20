@@ -1,6 +1,6 @@
 import { App } from "antd";
 import { useRef, useState, useCallback, useEffect, useMemo } from "react";
-import { servers, localStorageKey } from "@/config";
+import { servers, localStorageKey, agvKey } from "@/config";
 import { mapApi, doorApi } from "@/network/api";
 import { randomInRange } from "@/lib";
 import {
@@ -28,8 +28,7 @@ import type {
   TaskMode,
 } from "@/types/map-editor";
 
-// FIXME: 充电点
-const kChargeId = "15";
+const kChargeId = agvKey.chargePointId;
 
 const MapEditor: React.FC = () => {
   const { message, notification } = App.useApp();

@@ -28,7 +28,7 @@ import {
   AudioOutlined,
   LoadingOutlined,
 } from "@ant-design/icons";
-import { servers, localStorageKey } from "@/config";
+import { servers, localStorageKey, agvKey } from "@/config";
 import { randomInRange } from "@/lib";
 import {
   agvForwardTask,
@@ -157,8 +157,7 @@ const QUICK_COMMANDS = [
   "暂停",
 ];
 
-// FIXME: 充电点（与地图编辑器保持一致）
-const kChargeId = "15";
+const kChargeId = agvKey.chargePointId;
 
 // ========== 辅助函数 ==========
 

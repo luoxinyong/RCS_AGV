@@ -36,4 +36,6 @@ export const agvKey = {
   angleRange: 35,
   /** 取货(自调节): 可识别距离 */
   recognizableDistance: 1800,
+  /** 充电点 ID（地图坐标点编号） */
+  chargePointId: "15",
 };
